@@ -20,6 +20,9 @@ DEFAULT_PRICING = {
     'Soup': '2.40'
 }
 
+NA_IDENTIFIER = 'Niet beschikbaar'
+VEGETARIAN_IDENTIFIER = 'Vegetarische schotel'
+
 
 def get_week_menu(url):
     page = requests.get(url)
@@ -35,15 +38,21 @@ def get_week_menu(url):
         for course_count, course in enumerate(COURSES):
 
             options = {}
-            course_tree = menu_tree[0].xpath('child::tr[' + str(2 * (course_count + 1) + 1) + ']//td[last()]/text()')
+            is_vegetarian = []
+            course_tree = menu_tree[0].xpath('child::tr[' + str(2 * (course_count + 1) + 1) + ']//td[last()]')
 
-            for option_count, option in enumerate(course_tree):
+            for x in course_tree[0].xpath('br|img'):
+                is_vegetarian.append(True) if x.xpath('@alt="' + VEGETARIAN_IDENTIFIER + '"') else is_vegetarian.append(False)
+
+            for option_count, option in enumerate(course_tree[0].xpath('text()')):
 
                 if option.strip():
                     name = option[:option.find(unicode('€', "utf-8"))].strip()
                     price_index = option.find(unicode('€', "utf-8"))
 
-                    if name == 'Niet beschikbaar':
+                    vegetarian = is_vegetarian[option_count] if option_count < len(is_vegetarian) else False
+
+                    if name == NA_IDENTIFIER:
                         name = 'Not Available'
                         price = 'Not Available'
                     elif price_index < 0:
@@ -53,7 +62,8 @@ def get_week_menu(url):
 
                     options[option_count] = {
                         'name': name,
-                        'price': price
+                        'price': price,
+                        'vegetarian': vegetarian
                     }
 
             menu[course] = options
@@ -69,8 +79,7 @@ def print_week_menu(week_menu):
         for course in COURSES:
             print "  " + course
             for option in week_menu[menu][course]:
-                print "      name : " + week_menu[menu][course][option]['name']
-                print "      price : " + week_menu[menu][course][option]['price']
+                print "      name : " + week_menu[menu][course][option]['name'] + " @ " + week_menu[menu][course][option]['price'] + " " + str(week_menu[menu][course][option]['vegetarian'])
 
 
 ALMA = {
