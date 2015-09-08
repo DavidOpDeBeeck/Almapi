@@ -56,10 +56,7 @@ def get_week_menu(url):
                         'price': price
                     }
 
-                    option_count += 1
-
             menu[course] = options
-            course_count += 1
 
         menus[day_name] = menu
 
