@@ -28,14 +28,17 @@ def get_week_menu(url):
     menus = {}
 
     for day_name, day_identifier in DAYS_OF_THE_WEEK.iteritems():
-        menu = {}
-        temp = tree.xpath('//a[@name="' + day_identifier + '"]/../following::table[1]')
 
-        course_count = 1
-        for course in COURSES:
+        menu = {}
+        menu_tree = tree.xpath('//a[@name="' + day_identifier + '"]/../following::table[1]')
+
+        for course_count, course in enumerate(COURSES):
+
             options = {}
-            option_count = 0
-            for option in temp[0].xpath('child::tr[' + str(2 * course_count + 1) + ']//td[last()]/text()'):
+            course_tree = menu_tree[0].xpath('child::tr[' + str(2 * (course_count + 1) + 1) + ']//td[last()]/text()')
+
+            for option_count, option in enumerate(course_tree):
+
                 if option.strip():
                     name = option[:option.find(unicode('€', "utf-8"))].strip()
                     price_index = option.find(unicode('€', "utf-8"))
@@ -54,9 +57,12 @@ def get_week_menu(url):
                     }
 
                     option_count += 1
+
             menu[course] = options
             course_count += 1
+
         menus[day_name] = menu
+
     return menus
 
 
@@ -73,6 +79,7 @@ def print_week_menu(week_menu):
 ALMA = {
     'Alma 1': 'alma_1',
     'Alma 2': 'alma_2',
+    'Alma 3': 'alma_3',
     'Pauscollege': 'pauscollege',
     'Gasthuisberg': 'gasthuisberg'
 }
