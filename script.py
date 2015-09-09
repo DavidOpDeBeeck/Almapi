@@ -6,12 +6,25 @@ from collections import OrderedDict
 import requests
 import sqlite3
 
-DAYS_OF_THE_WEEK = OrderedDict()
-DAYS_OF_THE_WEEK['Monday'] = 'maandag'
-DAYS_OF_THE_WEEK['Tuesday'] = 'dinsdag'
-DAYS_OF_THE_WEEK['Wednesday'] = 'woensdag'
-DAYS_OF_THE_WEEK['Thursday'] = 'donderdag'
-DAYS_OF_THE_WEEK['Friday'] = 'vrijdag'
+# GENERAL VARIABLES
+
+ALMA = {
+    'Alma 1': 'alma_1',
+    'Alma 2': 'alma_2',
+    'Alma 3': 'alma_3',
+    'Pauscollege': 'pauscollege',
+    'Gasthuisberg': 'gasthuisberg'
+}
+
+DAYS_OF_THE_WEEK = OrderedDict(
+    [
+        ('Monday', 'maandag'),
+        ('Tuesday', 'dinsdag'),
+        ('Wednesday', 'woensdag'),
+        ('Thursday', 'donderdag'),
+        ('Friday', 'vrijdag')
+    ]
+)
 
 COURSES = [
     'Soup',
@@ -22,19 +35,37 @@ DEFAULT_PRICING = {
     'Soup': '2.40'
 }
 
+# SCRAPER SPECIFIC VARIABLES
+
 NA_IDENTIFIER = 'Niet beschikbaar'
 VEGETARIAN_IDENTIFIER = 'Vegetarische schotel'
 
-ALMA = {
-    'Alma 1': 'alma_1',
-    'Alma 2': 'alma_2',
-    'Alma 3': 'alma_3',
-    'Pauscollege': 'pauscollege',
-    'Gasthuisberg': 'gasthuisberg'
-}
+# DATE VARIABLES
+
+DATE_TODAY = datetime.today()
+DATE_TODAY_IN_WEEK = DATE_TODAY.weekday()
+
+# DATABASE VARIABLES
+
+DB_NAME = 'alma.db'
+DB_CREATE_NAME = 'alma.sql'
+DB_TABLES = [
+    'ALMA',
+    'OPTION',
+    'MENU',
+    'COURSE',
+    'MENU_has_OPTION'
+]
 
 
 def get_week_menu(url):
+    """
+        1. Retrieves the HTML of an ALMA week menu page.
+            1.1 Searches for the different day menus
+            1.2 Searches for the different menu courses
+            1.3 Searches for the different options in a course
+        5. Returns a dictionary containing the different days and their menus
+    """
     page = requests.get(url)
     tree = html.fromstring(page.text)
 
@@ -82,109 +113,75 @@ def get_week_menu(url):
 
     return menus
 
-# SQL FUNCTIONS
 
-DB_NAME = 'alma.db'
-DB_TABLES = [
-    'ALMA',
-    'OPTION',
-    'MENU',
-    'COURSE',
-    'MENU_has_OPTION'
-]
+# SQL FUNCTIONS
 
 
 def drop_tables():
     for table_name in DB_TABLES:
-        param = (table_name,)
-        cursor.execute('SELECT name FROM sqlite_master WHERE type="table" AND name=?;', param)
+        cursor.execute('SELECT name FROM sqlite_master WHERE type="table" AND name=?;', (table_name,))
         if cursor.fetchone() is not None:
             cursor.execute('DROP TABLE ' + table_name)
-    connection.commit()
 
 
 def create_tables():
-    f = open('alma.sql', 'r')
+    f = open(DB_CREATE_NAME, 'r')
     sql = f.read()
     cursor.executescript(sql)
-    connection.commit()
 
 
 def add_alma(alma_name):
-    args = (alma_name,)
-    cursor.execute('SELECT alma_id FROM ALMA WHERE name=?;', args)
-    alma = cursor.fetchone()
-    if alma is None:
-        args = (alma_name,)
-        cursor.execute('INSERT INTO ALMA (name) VALUES (?)', args)
+    cursor.execute('SELECT alma_id FROM ALMA WHERE name=?;', (alma_name,))
+    result = cursor.fetchone()
+    if result is None:
+        cursor.execute('INSERT INTO ALMA (name) VALUES (?)', (alma_name,))
         return cursor.lastrowid
     else:
-        return alma[0]
+        return result[0]
 
 
 def add_option(option_name, is_vegetarian):
-    args = (option_name,)
-    cursor.execute('SELECT option_id FROM OPTION WHERE name=?;', args)
-    option = cursor.fetchone()
-    if option is None:
-        args = (option_name, is_vegetarian,)
-        cursor.execute('INSERT INTO OPTION (name,vegetarian) VALUES (?,?)', args)
+    cursor.execute('SELECT option_id FROM OPTION WHERE name=?;', (option_name,))
+    result = cursor.fetchone()
+    if result is None:
+        cursor.execute('INSERT INTO OPTION (name,vegetarian) VALUES (?,?)', (option_name, is_vegetarian,))
         return cursor.lastrowid
     else:
-        return option[0]
+        return result[0]
 
 
 def add_course(course_name):
-    args = (course_name,)
-    cursor.execute('SELECT course_id FROM COURSE WHERE name=?;', args)
-    crs = cursor.fetchone()
-    if crs is None:
-        args = (course_name,)
-        cursor.execute('INSERT INTO COURSE (name) VALUES (?)', args)
+    cursor.execute('SELECT course_id FROM COURSE WHERE name=?;', (course_name,))
+    result = cursor.fetchone()
+    if result is None:
+        cursor.execute('INSERT INTO COURSE (name) VALUES (?)', (course_name,))
         return cursor.lastrowid
     else:
-        return crs[0]
+        return result[0]
 
 
 def add_menu(alma_id, date):
-    args = (alma_id, date,)
-    cursor.execute('SELECT menu_id FROM MENU WHERE alma_id=? AND date=?;', args)
-    menu = cursor.fetchone()
-    if menu is None:
-        args = (alma_id, date,)
-        cursor.execute('INSERT INTO MENU (alma_id,date) VALUES (?,?)', args)
+    cursor.execute('SELECT menu_id FROM MENU WHERE alma_id=? AND date=?;', (alma_id, date,))
+    result = cursor.fetchone()
+    if result is None:
+        cursor.execute('INSERT INTO MENU (alma_id,date) VALUES (?,?)', (alma_id, date,))
         return cursor.lastrowid
     else:
-        return menu[0]
+        return result[0]
 
 
 def add_option_to_menu(menu_id, course_id, option_id, price):
-    args = (menu_id, course_id, option_id,)
-    cursor.execute('SELECT * FROM MENU_has_OPTION WHERE menu_id=? AND course_id=? AND option_id=?;', args)
-    menu_option = cursor.fetchone()
-    if menu_option is None:
-        args = (menu_id, course_id, option_id, price,)
-        cursor.execute('INSERT INTO MENU_has_OPTION (menu_id, course_id, option_id, price) VALUES (?,?,?,?)', args)
+    cursor.execute('SELECT * FROM MENU_has_OPTION WHERE menu_id=? AND course_id=? AND option_id=?;', (menu_id, course_id, option_id,))
+    if cursor.fetchone() is None:
+        cursor.execute('INSERT INTO MENU_has_OPTION (menu_id, course_id, option_id, price) VALUES (?,?,?,?)', (menu_id, course_id, option_id, price,))
         return True
     else:
         return False
 
-# SCRIPT
 
-connection = sqlite3.connect(DB_NAME)
-cursor = connection.cursor()
-
-drop_tables()
-create_tables()
-
-date_today = datetime.today()
-date_today_in_week = date_today.weekday()
-
-for key, value in ALMA.iteritems():
-    alma_id = add_alma(key)
-    week_menu = get_week_menu('http://www.alma.be/' + value + '/menu_dezeweek.php')
+def save_week_menu(alma_id, week_menu):
     for day_count, day_name in enumerate(DAYS_OF_THE_WEEK.keys()):
-        date = date_today + timedelta(days=(day_count - date_today_in_week) if date_today_in_week < day_count else (day_count - date_today_in_week))
+        date = DATE_TODAY + timedelta(days=(day_count - DATE_TODAY_IN_WEEK) if DATE_TODAY_IN_WEEK < day_count else (day_count - DATE_TODAY_IN_WEEK))
         day_menu_id = add_menu(alma_id, date)
         for course_name in COURSES:
             course_id = add_course(course_name)
@@ -192,6 +189,16 @@ for key, value in ALMA.iteritems():
                 option = week_menu[day_name][course_name][option_count]
                 option_id = add_option(option['name'], option['vegetarian'])
                 add_option_to_menu(day_menu_id, course_id, option_id, option['price'])
+
+
+connection = sqlite3.connect(DB_NAME)
+cursor = connection.cursor()
+
+drop_tables()
+create_tables()
+
+for alma_name, alma_identifier in ALMA.iteritems():
+    save_week_menu(add_alma(alma_name), get_week_menu('http://www.alma.be/' + alma_identifier + '/menu_dezeweek.php'))
 
 connection.commit()
 connection.close()
