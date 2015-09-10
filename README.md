@@ -1,2 +1,2 @@
-# Alma-Web-Scraper
-A python webscraper used to extract the menus from alma.be
+# Almapi
+A RESTful API for them menus on alma.be written in python.
