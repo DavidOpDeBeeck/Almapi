@@ -2,7 +2,6 @@
 
 from lxml import html
 from datetime import datetime, timedelta
-from collections import OrderedDict
 import requests
 import sqlite3
 
@@ -16,15 +15,12 @@ ALMA = {
     'Gasthuisberg': 'gasthuisberg'
 }
 
-DAYS_OF_THE_WEEK = OrderedDict(
-    [
-        ('Monday', 'maandag'),
-        ('Tuesday', 'dinsdag'),
-        ('Wednesday', 'woensdag'),
-        ('Thursday', 'donderdag'),
-        ('Friday', 'vrijdag')
-    ]
-)
+DAYS_OF_THE_WEEK = [
+    'Monday',
+    'Tuesday',
+    'Wednesday',
+    'Friday'
+]
 
 COURSES = [
     'Soup',
@@ -39,6 +35,20 @@ DEFAULT_PRICING = {
 
 NA_IDENTIFIER = 'Niet beschikbaar'
 VEGETARIAN_IDENTIFIER = 'Vegetarische schotel'
+DAY_IDENTIFIER = [
+    [
+        'maandag',
+        'dinsdag',
+        'woensdag',
+        'donderdag',
+        'vrijdag'],
+    [
+        'maandag2',
+        'dinsdag2',
+        'woensdag2',
+        'donderdag2',
+        'vrijdag2']
+]
 
 # DATE VARIABLES
 
@@ -58,7 +68,7 @@ DB_TABLES = [
 ]
 
 
-def get_week_menu(url):
+def get_week_menu(url, day_identifier):
     """
         1. Retrieves the HTML of an ALMA week menu page.
             1.1 Searches for the different day menus
@@ -69,49 +79,49 @@ def get_week_menu(url):
     page = requests.get(url)
     tree = html.fromstring(page.text)
 
-    menus = {}
+    week_menus = {}
 
-    for day_name, day_identifier in DAYS_OF_THE_WEEK.iteritems():
+    for day_index, day_name in enumerate(DAYS_OF_THE_WEEK):
 
-        menu = {}
-        menu_tree = tree.xpath('//a[@name="' + day_identifier + '"]/../following::table[1]')
+        day_menu = {}
+        day_menu_tree = tree.xpath('//a[@name="' + day_identifier[day_index] + '"]/../following::table[1]')
 
-        for course_count, course in enumerate(COURSES):
+        for course_index, course_name in enumerate(COURSES):
 
-            options = {}
-            is_vegetarian = []
-            course_tree = menu_tree[0].xpath('child::tr[' + str(2 * (course_count + 1) + 1) + ']//td[last()]')
+            course_options = {}
+            is_option_vegetarian_list = []
+            course_tree = day_menu_tree[0].xpath('child::tr[' + str(2 * (course_index + 1) + 1) + ']//td[last()]')
 
             for x in course_tree[0].xpath('br|img'):
-                is_vegetarian.append(True) if x.xpath('@alt="' + VEGETARIAN_IDENTIFIER + '"') else is_vegetarian.append(False)
+                is_option_vegetarian_list.append(True) if x.xpath('@alt="' + VEGETARIAN_IDENTIFIER + '"') else is_option_vegetarian_list.append(False)
 
-            for option_count, option in enumerate(course_tree[0].xpath('text()')):
+            for option_index, option_element_text in enumerate(course_tree[0].xpath('text()')):
 
-                if option.strip():
-                    name = option[:option.find(unicode('€', "utf-8"))].strip()
-                    price_index = option.find(unicode('€', "utf-8"))
+                if option_element_text.strip():
+                    option_name = option_element_text[:option_element_text.find(unicode('€', "utf-8"))].strip()
+                    option_price_index = option_element_text.find(unicode('€', "utf-8"))
 
-                    vegetarian = is_vegetarian[option_count] if option_count < len(is_vegetarian) else False
+                    option_is_vegetarian = is_option_vegetarian_list[option_index] if option_index < len(is_option_vegetarian_list) else False
 
-                    if name == NA_IDENTIFIER:
-                        name = 'Not Available'
-                        price = 'Not Available'
-                    elif price_index < 0:
-                        price = DEFAULT_PRICING[course].strip() if course in DEFAULT_PRICING else 'Not Available'
+                    if option_name == NA_IDENTIFIER:
+                        option_name = 'Not Available'
+                        option_price = 'Not Available'
+                    elif option_price_index < 0:
+                        option_price = DEFAULT_PRICING[course_name].strip() if course_name in DEFAULT_PRICING else 'Not Available'
                     else:
-                        price = option[price_index + 2:len(option)].strip()
+                        option_price = option_element_text[option_price_index + 2:len(option_element_text)].strip()
 
-                    options[option_count] = {
-                        'name': name,
-                        'price': price,
-                        'vegetarian': vegetarian
+                    course_options[option_index] = {
+                        'name': option_name,
+                        'price': option_price,
+                        'vegetarian': option_is_vegetarian
                     }
 
-            menu[course] = options
+            day_menu[course_name] = course_options
 
-        menus[day_name] = menu
+        week_menus[day_name] = day_menu
 
-    return menus
+    return week_menus
 
 
 # SQL FUNCTIONS
@@ -179,9 +189,9 @@ def add_or_get_option_to_menu(menu_id, course_id, option_id, price):
         return False
 
 
-def save_week_menu(alma_id, week_menu):
-    for day_count, day_name in enumerate(DAYS_OF_THE_WEEK.keys()):
-        date = DATE_TODAY + timedelta(days=(day_count - DATE_TODAY_IN_WEEK))
+def save_week_menu(alma_id, week_menu, day_modifier):
+    for day_index, day_name in enumerate(DAYS_OF_THE_WEEK):
+        date = DATE_TODAY + timedelta(days=(day_index - DATE_TODAY_IN_WEEK + day_modifier))
         day_menu_id = add_or_get_menu(alma_id, date)
         for course_name in COURSES:
             course_id = add_or_get_course(course_name)
@@ -199,7 +209,8 @@ drop_tables()
 create_tables()
 
 for alma_name, alma_identifier in ALMA.iteritems():
-    save_week_menu(add_or_get_alma(alma_name), get_week_menu('http://www.alma.be/' + alma_identifier + '/menu_dezeweek.php'))
+    save_week_menu(add_or_get_alma(alma_name), get_week_menu('http://www.alma.be/%s/menu_dezeweek.php' % alma_identifier, DAY_IDENTIFIER[0]), 0)
+    save_week_menu(add_or_get_alma(alma_name), get_week_menu('http://www.alma.be/%s/menu_volgweek.php' % alma_identifier, DAY_IDENTIFIER[1]), 7)
 
 connection.commit()
 connection.close()
