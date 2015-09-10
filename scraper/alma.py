@@ -41,13 +41,15 @@ DAY_IDENTIFIER = [
         'dinsdag',
         'woensdag',
         'donderdag',
-        'vrijdag'],
+        'vrijdag'
+    ],
     [
         'maandag2',
         'dinsdag2',
         'woensdag2',
         'donderdag2',
-        'vrijdag2']
+        'vrijdag2'
+    ]
 ]
 
 # DATE VARIABLES
@@ -67,6 +69,7 @@ DB_TABLES = [
     'MENU_has_OPTION'
 ]
 
+# SCRAPER
 
 def get_week_menu(url, day_identifier):
     """
@@ -180,7 +183,7 @@ def add_or_get_menu(alma_id, date):
         return result[0]
 
 
-def add_or_get_option_to_menu(menu_id, course_id, option_id, price):
+def add_option_to_menu(menu_id, course_id, option_id, price):
     cursor.execute('SELECT * FROM MENU_has_OPTION WHERE menu_id=? AND course_id=? AND option_id=?;', (menu_id, course_id, option_id,))
     if cursor.fetchone() is None:
         cursor.execute('INSERT INTO MENU_has_OPTION (menu_id, course_id, option_id, price) VALUES (?,?,?,?)', (menu_id, course_id, option_id, price,))
@@ -198,7 +201,7 @@ def save_week_menu(alma_id, week_menu, day_modifier):
             for option_count in week_menu[day_name][course_name]:
                 option = week_menu[day_name][course_name][option_count]
                 option_id = add_or_get_option(option['name'], option['vegetarian'])
-                add_or_get_option_to_menu(day_menu_id, course_id, option_id, option['price'])
+                add_option_to_menu(day_menu_id, course_id, option_id, option['price'])
 
 # SCRIPT
 
