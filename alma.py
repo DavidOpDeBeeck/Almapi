@@ -4,6 +4,7 @@ from lxml import html
 from datetime import datetime, timedelta
 import requests
 import sqlite3
+import utils
 
 # GENERAL VARIABLES
 
@@ -57,18 +58,6 @@ DAY_IDENTIFIER = [
 
 DATE_TODAY = datetime.today()
 DATE_TODAY_IN_WEEK = DATE_TODAY.weekday()
-
-# DATABASE VARIABLES
-
-DB_NAME = 'alma.db'
-DB_CREATE_NAME = 'alma.sql'
-DB_TABLES = [
-    'ALMA',
-    'OPTION',
-    'MENU',
-    'COURSE',
-    'MENU_has_OPTION'
-]
 
 # SCRAPER
 
@@ -128,93 +117,28 @@ def get_week_menu(url, day_identifier):
     return week_menus
 
 
-# SQL FUNCTIONS
-
-
-def drop_tables():
-    for table_name in DB_TABLES:
-        cursor.execute('SELECT name FROM sqlite_master WHERE type="table" AND name=?;', (table_name,))
-        if cursor.fetchone() is not None:
-            cursor.execute('DROP TABLE ' + table_name)
-
-
-def create_tables():
-    f = open(DB_CREATE_NAME, 'r')
-    sql = f.read()
-    cursor.executescript(sql)
-
-
-def add_or_get_alma(alma_name):
-    cursor.execute('SELECT alma_id FROM ALMA WHERE name=?;', (alma_name,))
-    result = cursor.fetchone()
-    if result is None:
-        cursor.execute('INSERT INTO ALMA (name) VALUES (?)', (alma_name,))
-        return cursor.lastrowid
-    else:
-        return result[0]
-
-
-def add_or_get_option(option_name, is_vegetarian):
-    cursor.execute('SELECT option_id FROM OPTION WHERE name=?;', (option_name,))
-    result = cursor.fetchone()
-    if result is None:
-        cursor.execute('INSERT INTO OPTION (name,vegetarian) VALUES (?,?)', (option_name, is_vegetarian,))
-        return cursor.lastrowid
-    else:
-        return result[0]
-
-
-def add_or_get_course(course_name):
-    cursor.execute('SELECT course_id FROM COURSE WHERE name=?;', (course_name,))
-    result = cursor.fetchone()
-    if result is None:
-        cursor.execute('INSERT INTO COURSE (name) VALUES (?)', (course_name,))
-        return cursor.lastrowid
-    else:
-        return result[0]
-
-
-def add_or_get_menu(alma_id, date):
-    cursor.execute('SELECT menu_id FROM MENU WHERE alma_id=? AND date=?;', (alma_id, date,))
-    result = cursor.fetchone()
-    if result is None:
-        cursor.execute('INSERT INTO MENU (alma_id,date) VALUES (?,?)', (alma_id, date,))
-        return cursor.lastrowid
-    else:
-        return result[0]
-
-
-def add_option_to_menu(menu_id, course_id, option_id, price):
-    cursor.execute('SELECT * FROM MENU_has_OPTION WHERE menu_id=? AND course_id=? AND option_id=?;', (menu_id, course_id, option_id,))
-    if cursor.fetchone() is None:
-        cursor.execute('INSERT INTO MENU_has_OPTION (menu_id, course_id, option_id, price) VALUES (?,?,?,?)', (menu_id, course_id, option_id, price,))
-        return True
-    else:
-        return False
-
-
 def save_week_menu(alma_id, week_menu, day_modifier):
     for day_index, day_name in enumerate(DAYS_OF_THE_WEEK):
         date = DATE_TODAY + timedelta(days=(day_index - DATE_TODAY_IN_WEEK + day_modifier))
-        day_menu_id = add_or_get_menu(alma_id, date)
+        day_menu_id = utils.add_menu(alma_id, date)
         for course_name in COURSES:
-            course_id = add_or_get_course(course_name)
+            course_id = utils.add_course(course_name)
             for option_count in week_menu[day_name][course_name]:
                 option = week_menu[day_name][course_name][option_count]
-                option_id = add_or_get_option(option['name'], option['vegetarian'])
-                add_option_to_menu(day_menu_id, course_id, option_id, option['price'])
+                option_id = utils.add_option(option['name'], option['vegetarian'])
+                utils.add_option_to_menu(day_menu_id, course_id, option_id, option['price'])
 
 # SCRIPT
 
 connection = sqlite3.connect(DB_NAME)
 cursor = connection.cursor()
 
-drop_tables()
-create_tables()
+utils.drop_tables()
+utils.create_tables()
 
 for alma_name, alma_identifier in ALMA.iteritems():
-    save_week_menu(add_or_get_alma(alma_name), get_week_menu('http://www.alma.be/%s/menu_dezeweek.php' % alma_identifier, DAY_IDENTIFIER[0]), 0)
-    save_week_menu(add_or_get_alma(alma_name), get_week_menu('http://www.alma.be/%s/menu_volgweek.php' % alma_identifier, DAY_IDENTIFIER[1]), 7)
+    save_week_menu(utils.add_alma(alma_name), get_week_menu('http://www.alma.be/%s/menu_dezeweek.php' % alma_identifier, DAY_IDENTIFIER[0]), 0)
+    save_week_menu(utils.add_alma(alma_name), get_week_menu('http://www.alma.be/%s/menu_volgweek.php' % alma_identifier, DAY_IDENTIFIER[1]), 7)
 
 connection.commit()
 connection.close()
