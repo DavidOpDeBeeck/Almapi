@@ -1,4 +1,5 @@
 import sqlite3
+from datetime import datetime, timedelta, date
 
 # DB STATIC VARIABLES
 
@@ -78,14 +79,17 @@ def get_alma(alma_id):
         close_connection()
 
 
-def get_menu(alma_id):
+def get_menu(alma_id, year, week):
     try:
         cursor = open_connection()
+
+        from_date = get_first_day_in_week(year, week)
+        to_date = from_date + timedelta(days=6)
 
         response = {}
         courses = {}
 
-        cursor.execute('SELECT menu_id,date FROM MENU WHERE alma_id=?;', (alma_id,))
+        cursor.execute('SELECT menu_id,date FROM MENU WHERE alma_id=? AND date > ? AND date < ?;', (alma_id, from_date, to_date,))
         menus = cursor.fetchall()
         for menu in menus:
             date = menu[1][:menu[1].find(' ')].strip()
@@ -178,3 +182,12 @@ def add_option_to_menu(menu_id, course_id, option_id, price):
         return option_id
     finally:
         close_connection()
+
+
+# HELPER FUNCTIONS
+
+def get_first_day_in_week(year, week):
+    ret = datetime.strptime('%04d-%02d-1' % (year, week), '%Y-%W-%w')
+    if date(year, 1, 4).isoweekday() > 4:
+        ret -= timedelta(days=7)
+    return ret
