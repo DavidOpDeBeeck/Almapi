@@ -130,14 +130,8 @@ def save_week_menu(alma_id, week_menu, day_modifier):
 
 # SCRIPT
 
-connection = sqlite3.connect(DB_NAME)
-cursor = connection.cursor()
-
 utils.create_tables()
 
 for alma_name, alma_identifier in ALMA.iteritems():
     save_week_menu(utils.add_alma(alma_name), get_week_menu('http://www.alma.be/%s/menu_dezeweek.php' % alma_identifier, DAY_IDENTIFIER[0]), 0)
     save_week_menu(utils.add_alma(alma_name), get_week_menu('http://www.alma.be/%s/menu_volgweek.php' % alma_identifier, DAY_IDENTIFIER[1]), 7)
-
-connection.commit()
-connection.close()
