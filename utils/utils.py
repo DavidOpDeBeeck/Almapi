@@ -3,8 +3,8 @@ from datetime import datetime, timedelta, date
 
 # DB STATIC VARIABLES
 
-DB_NAME = 'alma.db'
-DB_CREATE_NAME = 'alma.sql'
+DB_NAME = 'scraper/alma.db'
+DB_CREATE_NAME = 'scraper/alma.sql'
 DB_TABLES = [
     'ALMA',
     'OPTION',

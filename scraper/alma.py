@@ -1,10 +1,12 @@
 # coding=utf-8
 
-from lxml import html
 from datetime import datetime, timedelta
+
+from lxml import html
 import requests
-import sqlite3
-import utils
+
+from utils import utils
+
 
 # GENERAL VARIABLES
 
