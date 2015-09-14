@@ -133,7 +133,6 @@ def save_week_menu(alma_id, week_menu, day_modifier):
 connection = sqlite3.connect(DB_NAME)
 cursor = connection.cursor()
 
-utils.drop_tables()
 utils.create_tables()
 
 for alma_name, alma_identifier in ALMA.iteritems():
