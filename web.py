@@ -1,8 +1,9 @@
 #!flask/bin/python
-from flask import Flask
 from datetime import date
-import utils
+from flask import Flask
 import json
+
+from utils import utils
 
 app = Flask(__name__)
 
