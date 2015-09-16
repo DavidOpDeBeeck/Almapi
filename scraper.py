@@ -1,10 +1,11 @@
 # coding=utf-8
 
 from datetime import datetime, timedelta
+
 from lxml import html
 import requests
+from sql import utils
 
-from utils import utils
 
 
 # GENERAL VARIABLES
