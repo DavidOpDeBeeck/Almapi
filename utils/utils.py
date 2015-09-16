@@ -89,6 +89,11 @@ def get_menu(alma_id, year, week):
         response = []
         courses = {}
 
+        cursor.execute('SELECT course_id,name FROM COURSE;')
+
+        for course in cursor.fetchall():
+            courses[course[0]] = course[1]
+
         cursor.execute('SELECT menu_id,date FROM MENU WHERE alma_id=? AND date > ? AND date < ?;', (alma_id, from_date, to_date,))
         menus = cursor.fetchall()
         for menu in menus:
@@ -97,12 +102,8 @@ def get_menu(alma_id, year, week):
                 'date': menu[1][:menu[1].find(' ')].strip()
             }
 
-            cursor.execute('SELECT course_id,name FROM COURSE;')
-            result = cursor.fetchall()
-
-            for course in result:
-                courses[course[0]] = course[1]
-                day['menu'][course[1]] = []
+            for course_name in courses.values():
+                day['menu'][course_name] = []
 
             cursor.execute('SELECT option_id,course_id,price FROM MENU_has_OPTION WHERE menu_id=?;', (menu[0],))
             options = cursor.fetchall()
