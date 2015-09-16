@@ -86,32 +86,35 @@ def get_menu(alma_id, year, week):
         from_date = get_first_day_in_week(year, week)
         to_date = from_date + timedelta(days=6)
 
-        response = {}
+        response = []
         courses = {}
 
         cursor.execute('SELECT menu_id,date FROM MENU WHERE alma_id=? AND date > ? AND date < ?;', (alma_id, from_date, to_date,))
         menus = cursor.fetchall()
         for menu in menus:
-            date = menu[1][:menu[1].find(' ')].strip()
-            response[date] = {}
+            day = {
+                'menu': {},
+                'date': menu[1][:menu[1].find(' ')].strip()
+            }
 
             cursor.execute('SELECT course_id,name FROM COURSE;')
             result = cursor.fetchall()
 
             for course in result:
                 courses[course[0]] = course[1]
-                response[date][course[1]] = []
+                day['menu'][course[1]] = []
 
             cursor.execute('SELECT option_id,course_id,price FROM MENU_has_OPTION WHERE menu_id=?;', (menu[0],))
             options = cursor.fetchall()
             for option in options:
                 cursor.execute('SELECT option_id,name,vegetarian FROM OPTION WHERE option_id=?;', (option[0],))
                 for option_info in cursor.fetchall():
-                    response[date][courses[option[1]]].append({
+                    day['menu'][courses[option[1]]].append({
                         'name': option_info[1],
                         'price': option[2],
                         'vegetarian': option_info[2]
                     })
+            response.append(day)
         return response
     finally:
         close_connection()
@@ -159,13 +162,13 @@ def add_course(course_name):
         close_connection()
 
 
-def add_menu(alma_id, date):
+def add_menu(alma_id, menu_date):
     try:
         cursor = open_connection()
-        cursor.execute('SELECT menu_id FROM MENU WHERE alma_id=? AND date=?;', (alma_id, date,))
+        cursor.execute('SELECT menu_id FROM MENU WHERE alma_id=? AND date=?;', (alma_id, menu_date,))
         result = cursor.fetchone()
         if result is None:
-            cursor.execute('INSERT INTO MENU (alma_id,date) VALUES (?,?)', (alma_id, date,))
+            cursor.execute('INSERT INTO MENU (alma_id,date) VALUES (?,?)', (alma_id, menu_date,))
             return cursor.lastrowid
         else:
             return result[0]

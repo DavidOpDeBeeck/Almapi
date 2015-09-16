@@ -38,22 +38,25 @@ A RESTful API for the menus on alma.be written in python.
 ```
 **Example Output**
 ```
-{
-    "2015-09-14": {
-        "Soup": [
-            {
-                "name": "Bloemkoolroomsoep", 
-                "price": 2.4, 
-                "vegetarian": 1
-            }, ...
-        ],
-        "Main Course": [
-            {
-                "name": "Kalkoensteak met boontjes", 
-                "price": 3.2, 
-                "vegetarian": 0
-            }, ...
-        ]
+[
+    {
+        "date": "2015-09-14",
+        "menu": {
+            "Soup": [
+                {
+                    "name": "Bloemkoolroomsoep",
+                    "price": 2.4,
+                    "vegetarian": 1
+                }, ...
+            ],
+            "Main Course": [
+                {
+                    "name": "Kalkoensteak met boontjes",
+                    "price": 3.2,
+                    "vegetarian": 0
+                }, ...
+            ]
+        }
     }, ...
-}
+]
 ```
