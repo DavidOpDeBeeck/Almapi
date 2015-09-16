@@ -1,7 +1,6 @@
 # coding=utf-8
 
 from datetime import datetime, timedelta
-
 from lxml import html
 import requests
 
@@ -65,11 +64,15 @@ DATE_TODAY_IN_WEEK = DATE_TODAY.weekday()
 
 def get_week_menu(url, day_identifier):
     """
-        1. Retrieves the HTML of an ALMA week menu page.
-            1.1 Searches for the different day menus
-                1.1.1 Searches for the different menu courses
-                    1.1.1.1 Searches for the different options in a course
-        2. Returns a dictionary containing the different days and their menus
+        @Parameter url The url that contains the menu
+        @Parameter day_identifier Identifier array used to identify the day elements on the page
+
+        Retrieves the HTML of an ALMA week menu page.
+            Searches for the different day menus
+                Searches for the different menu courses
+                    Searches for the different options in a course
+
+        @Return A dictionary containing the different days and their menus
     """
     page = requests.get(url)
     tree = html.fromstring(page.text)
@@ -99,8 +102,7 @@ def get_week_menu(url, day_identifier):
                     option_is_vegetarian = is_option_vegetarian_list[option_index] if option_index < len(is_option_vegetarian_list) else False
 
                     if option_name == NA_IDENTIFIER:
-                        option_name = 'Not Available'
-                        option_price = 'Not Available'
+                        option_name = option_price = 'Not Available'
                     elif option_price_index < 0:
                         option_price = DEFAULT_PRICING[course_name].strip() if course_name in DEFAULT_PRICING else 'Not Available'
                     else:
@@ -120,6 +122,16 @@ def get_week_menu(url, day_identifier):
 
 
 def save_week_menu(alma_id, week_menu, day_modifier):
+    """
+        @Parameter alma_id The id of the current alma
+        @Parameter week_menu The menu of the current alma (dictionary)
+        @Parameter day_modifier The modifier used to calculate the day of the menu (day_index - DATE_TODAY_IN_WEEK + day_modifier)
+
+        Iterates over all the days of the week.
+            For each day we calculate the date (@see day_modifier) and add it to the database. (Returns a menu id)
+                Iterates over all the possible courses and adds them to the database. (Returns a course id)
+                    Iterates over all the options in a course of the current day and adds them to the database.
+    """
     for day_index, day_name in enumerate(DAYS_OF_THE_WEEK):
         date = DATE_TODAY + timedelta(days=(day_index - DATE_TODAY_IN_WEEK + day_modifier))
         day_menu_id = utils.add_menu(alma_id, date)
@@ -128,12 +140,12 @@ def save_week_menu(alma_id, week_menu, day_modifier):
             for option_count in week_menu[day_name][course_name]:
                 option = week_menu[day_name][course_name][option_count]
                 option_id = utils.add_option(option['name'], option['vegetarian'])
-                utils.add_option_to_menu(day_menu_id, course_id, option_id, option['price'])
+                utils.add_option_to_menu(day_menu_id, course_id, option_id, option['price'])  # SCRIPT
 
-# SCRIPT
-
+# CREATES THE TABLES IF THEY DON'T EXIST
 utils.create_tables()
 
+# ITERATES OVER ALL THE ALMA'S AND ADDS THE CURRENT AND NEXT WEEK TO THE DATABASE
 for alma_name, alma_identifier in ALMA.iteritems():
     save_week_menu(utils.add_alma(alma_name), get_week_menu('http://www.alma.be/%s/menu_dezeweek.php' % alma_identifier, DAY_IDENTIFIER[0]), 0)
     save_week_menu(utils.add_alma(alma_name), get_week_menu('http://www.alma.be/%s/menu_volgweek.php' % alma_identifier, DAY_IDENTIFIER[1]), 7)
