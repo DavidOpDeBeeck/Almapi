@@ -2,7 +2,7 @@
 A RESTful API for the menus on alma.be written in python.
 
 ## Endpoints
-### 1
+### Get information about all the available alma's
 ```
 /almas
 ```
@@ -19,7 +19,7 @@ A RESTful API for the menus on alma.be written in python.
     }, ...
 ]
 ```
-### 2
+### Get information about a specific alma
 ```
 /almas/:id
 ```
@@ -30,8 +30,9 @@ A RESTful API for the menus on alma.be written in python.
     "name": "Gasthuisberg"
 }
 ```
-### 3
+### Get the menu of a specific alma
 ```
+/almas/:id/menu
 /almas/:id/menu/:week
 /almas/:id/menu/:week/:year
 ```
