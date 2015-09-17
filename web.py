@@ -34,4 +34,4 @@ def web_get_specific_alma_menu_from_specific_week_and_specific_year(alma_id, wee
 
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(host='0.0.0.0')
