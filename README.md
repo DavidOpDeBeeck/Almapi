@@ -1,13 +1,27 @@
 # Almapi
 A RESTful API for the menus on alma.be written in python.
 
+## Web Scraper
+```sh
+crontab -e
+* 23 * * * python /path/to/script/scraper.py
+```
+The code above will cause the code to be executed every 23 hours.
+## Web API
+```sh
+python /path/to/script/web.py
+```
+The web API will by default listen on all public IP addresses.
+```python
+app.run(host='0.0.0.0')
+```
 ## Endpoints
 ### Get information about all the available alma's
 ```
 /almas
 ```
 **Example Output**
-```
+```json
 [
     {
         "id": 1, 
@@ -24,7 +38,7 @@ A RESTful API for the menus on alma.be written in python.
 /almas/:id
 ```
 **Example Output**
-```
+```json
 {
     "id": 1, 
     "name": "Gasthuisberg"
@@ -37,7 +51,7 @@ A RESTful API for the menus on alma.be written in python.
 /almas/:id/menu/:week/:year
 ```
 **Example Output**
-```
+```json
 [
     {
         "date": "2015-09-14",
