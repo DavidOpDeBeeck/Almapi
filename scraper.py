@@ -1,11 +1,9 @@
 # coding=utf-8
-
-from datetime import datetime, timedelta
-
 from lxml import html
+from datetime import datetime, timedelta
 import requests
-from sql import utils
 
+import utilities
 
 
 # GENERAL VARIABLES
@@ -135,18 +133,18 @@ def save_week_menu(alma_id, week_menu, day_modifier):
     """
     for day_index, day_name in enumerate(DAYS_OF_THE_WEEK):
         date = DATE_TODAY + timedelta(days=(day_index - DATE_TODAY_IN_WEEK + day_modifier))
-        day_menu_id = utils.add_menu(alma_id, date)
+        day_menu_id = utilities.add_menu(alma_id, date)
         for course_name in COURSES:
-            course_id = utils.add_course(course_name)
+            course_id = utilities.add_course(course_name)
             for option_count in week_menu[day_name][course_name]:
                 option = week_menu[day_name][course_name][option_count]
-                option_id = utils.add_option(option['name'], option['vegetarian'])
-                utils.add_option_to_menu(day_menu_id, course_id, option_id, option['price'])  # SCRIPT
+                option_id = utilities.add_option(option['name'], option['vegetarian'])
+                utilities.add_option_to_menu(day_menu_id, course_id, option_id, option['price'])  # SCRIPT
 
 # CREATES THE TABLES IF THEY DON'T EXIST
-utils.create_tables()
+utilities.create_tables()
 
 # ITERATES OVER ALL THE ALMA'S AND ADDS THE CURRENT AND NEXT WEEK TO THE DATABASE
 for alma_name, alma_identifier in ALMA.iteritems():
-    save_week_menu(utils.add_alma(alma_name), get_week_menu('http://www.alma.be/%s/menu_dezeweek.php' % alma_identifier, DAY_IDENTIFIER[0]), 0)
-    save_week_menu(utils.add_alma(alma_name), get_week_menu('http://www.alma.be/%s/menu_volgweek.php' % alma_identifier, DAY_IDENTIFIER[1]), 7)
+    save_week_menu(utilities.add_alma(alma_name), get_week_menu('http://www.alma.be/%s/menu_dezeweek.php' % alma_identifier, DAY_IDENTIFIER[0]), 0)
+    save_week_menu(utilities.add_alma(alma_name), get_week_menu('http://www.alma.be/%s/menu_volgweek.php' % alma_identifier, DAY_IDENTIFIER[1]), 7)
