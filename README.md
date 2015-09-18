@@ -7,6 +7,8 @@ crontab -e
 * 23 * * * python /path/to/script/scraper.py
 ```
 The code above will cause the code to be executed every 23 hours.
+
+Add the `clean` argument to reset the database.
 ## Web API
 ```sh
 python /path/to/script/web.py
@@ -74,3 +76,9 @@ app.run(host='0.0.0.0')
     }, ...
 ]
 ```
+### Test endpoints
+* [almapi.davidopdebeeck.be/almas](http://almapi.davidopdebeeck.be/almas)
+* [almapi.davidopdebeeck.be/almas/1](http://almapi.davidopdebeeck.be/almas/1)
+* [almapi.davidopdebeeck.be/almas/1/menu](almapi.davidopdebeeck.be/almas/1/menu)
+* [almapi.davidopdebeeck.be/almas/1/menu/39](almapi.davidopdebeeck.be/almas/1/menu/39)
+* [almapi.davidopdebeeck.be/almas/1/menu/39/2015](almapi.davidopdebeeck.be/almas/1/menu/39/2015)
