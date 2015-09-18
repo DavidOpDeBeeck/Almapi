@@ -1,4 +1,5 @@
 # coding=utf-8
+import sys
 from lxml import html
 from datetime import datetime, timedelta
 import requests
@@ -63,15 +64,15 @@ DATE_TODAY_IN_WEEK = DATE_TODAY.weekday()
 
 def get_week_menu(url, day_identifier):
     """
-        @Parameter url The url that contains the menu
-        @Parameter day_identifier Identifier array used to identify the day elements on the page
+        :param url The url that contains the menu
+        :param day_identifier Identifier array used to identify the day elements on the page
 
         Retrieves the HTML of an ALMA week menu page.
             Searches for the different day menus
                 Searches for the different menu courses
                     Searches for the different options in a course
 
-        @Return A dictionary containing the different days and their menus
+        :return A dictionary containing the different days and their menus
     """
     page = requests.get(url)
     tree = html.fromstring(page.text)
@@ -122,24 +123,31 @@ def get_week_menu(url, day_identifier):
 
 def save_week_menu(alma_id, week_menu, day_modifier):
     """
-        @Parameter alma_id The id of the current alma
-        @Parameter week_menu The menu of the current alma (dictionary)
-        @Parameter day_modifier The modifier used to calculate the day of the menu (day_index - DATE_TODAY_IN_WEEK + day_modifier)
+        :param alma_id The id of the current alma
+        :param week_menu The menu of the current alma (dictionary)
+        :param day_modifier The modifier used to calculate the day of the menu (day_index - DATE_TODAY_IN_WEEK + day_modifier)
 
         Iterates over all the days of the week.
-            For each day we calculate the date (@see day_modifier) and add it to the database. (Returns a menu id)
+            For each day we calculate the date (:see day_modifier) and add it to the database. (Returns a menu id)
                 Iterates over all the possible courses and adds them to the database. (Returns a course id)
                     Iterates over all the options in a course of the current day and adds them to the database.
     """
     for day_index, day_name in enumerate(DAYS_OF_THE_WEEK):
         date = DATE_TODAY + timedelta(days=(day_index - DATE_TODAY_IN_WEEK + day_modifier))
-        day_menu_id = utilities.add_menu(alma_id, date)
+        day_menu_id = utilities.add_menu(alma_id, date.date())
         for course_name in COURSES:
+            options = []
+            options_price = []
             course_id = utilities.add_course(course_name)
             for option_count in week_menu[day_name][course_name]:
                 option = week_menu[day_name][course_name][option_count]
-                option_id = utilities.add_option(option['name'], option['vegetarian'])
-                utilities.add_option_to_menu(day_menu_id, course_id, option_id, option['price'])  # SCRIPT
+                options.append(utilities.add_option(option['name'], option['vegetarian']))
+                options_price.append(option['price'])
+            utilities.add_options_to_menu(day_menu_id, course_id, options, options_price)
+
+# IF CLEAN IS ADDED AS AN ARGUMENT WE DROP THE CURRENT DATABASE
+if "clean" in sys.argv:
+    utilities.drop_tables()
 
 # CREATES THE TABLES IF THEY DON'T EXIST
 utilities.create_tables()
