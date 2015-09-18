@@ -44,7 +44,7 @@ app.run(host='0.0.0.0')
     "name": "Gasthuisberg"
 }
 ```
-### Get the menu of a specific alma
+### Get the week menu of a specific alma
 ```
 /almas/:id/menu
 /almas/:id/menu/:week
