@@ -20,14 +20,33 @@ connection = None
 # DB FUNCTIONS
 
 def open_connection():
+    """
+        Opens the connection to the database file.
+        :return The cursor of the connection.
+    """
     global connection
     connection = sqlite3.connect(DB_NAME)
     return connection.cursor()
 
 
 def close_connection():
+    """
+        Closes the connection to the database file.
+    """
+    global connection
     connection.commit()
     connection.close()
+
+
+def create_tables():
+    if not check_if_tables_exist():
+        try:
+            cursor = open_connection()
+            f = open(DB_CREATE_NAME, 'r')
+            sql = f.read()
+            cursor.executescript(sql)
+        finally:
+            close_connection()
 
 
 def drop_tables():
@@ -41,12 +60,15 @@ def drop_tables():
         close_connection()
 
 
-def create_tables():
+def check_if_tables_exist():
     try:
         cursor = open_connection()
-        f = open(DB_CREATE_NAME, 'r')
-        sql = f.read()
-        cursor.executescript(sql)
+        exist = True
+        for table_name in DB_TABLES:
+            cursor.execute('SELECT name FROM sqlite_master WHERE type="table" AND name=?;', (table_name,))
+            if cursor.fetchone() is None:
+                exist = False
+        return exist
     finally:
         close_connection()
 
@@ -177,12 +199,12 @@ def add_menu(alma_id, menu_date):
         close_connection()
 
 
-def add_option_to_menu(menu_id, course_id, option_id, price):
+def add_options_to_menu(menu_id, course_id, options, prices):
     try:
         cursor = open_connection()
-        cursor.execute('SELECT option_id FROM MENU_has_OPTION WHERE menu_id=? AND course_id=? AND option_id=?;', (menu_id, course_id, option_id,))
-        if cursor.fetchone() is None:
-            cursor.execute('INSERT INTO MENU_has_OPTION (menu_id, course_id, option_id, price) VALUES (?,?,?,?)', (menu_id, course_id, option_id, price,))
+        cursor.execute(' DELETE FROM MENU_has_OPTION WHERE menu_id=? AND course_id=?;', (menu_id, course_id,))
+        for option_index, option_id in enumerate(options):
+            cursor.execute('INSERT INTO MENU_has_OPTION (menu_id, course_id, option_id, price) VALUES (?,?,?,?)', (menu_id, course_id, option_id, prices[option_index],))
         return option_id
     finally:
         close_connection()
