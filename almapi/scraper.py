@@ -1,10 +1,12 @@
 # coding=utf-8
 import sys
-from lxml import html
 from datetime import datetime, timedelta
+
 import requests
 
-import utilities
+from lxml import html
+from almapi import utilities
+
 
 
 # GENERAL VARIABLES
