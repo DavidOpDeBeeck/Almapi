@@ -155,6 +155,6 @@ if "clean" in sys.argv:
 utilities.create_tables()
 
 # ITERATES OVER ALL THE ALMA'S AND ADDS THE CURRENT AND NEXT WEEK TO THE DATABASE
-for alma_name, alma_identifier in ALMA.iteritems():
+for alma_name, alma_identifier in ALMA.items():
     save_week_menu(utilities.add_alma(alma_name), get_week_menu('http://www.alma.be/%s/menu_dezeweek.php' % alma_identifier, DAY_IDENTIFIER[0]), 0)
     save_week_menu(utilities.add_alma(alma_name), get_week_menu('http://www.alma.be/%s/menu_volgweek.php' % alma_identifier, DAY_IDENTIFIER[1]), 7)

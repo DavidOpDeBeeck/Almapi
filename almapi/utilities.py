@@ -205,7 +205,7 @@ def add_options_to_menu(menu_id, course_id, options, prices):
         cursor.execute(' DELETE FROM MENU_has_OPTION WHERE menu_id=? AND course_id=?;', (menu_id, course_id,))
         for option_index, option_id in enumerate(options):
             cursor.execute('INSERT INTO MENU_has_OPTION (menu_id, course_id, option_id, price) VALUES (?,?,?,?)', (menu_id, course_id, option_id, prices[option_index],))
-        return option_id
+        return options
     finally:
         close_connection()
 
