@@ -143,7 +143,7 @@ def get_menu(alma_id, year, week):
         for menu in menus:
             day = {
                 'menu': {},
-                'date': menu[1][:menu[1].find(' ')].strip()
+                'date': menu[1]
             }
 
             for course_name in courses.values():
