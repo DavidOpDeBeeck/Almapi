@@ -4,6 +4,8 @@ A RESTful API for the menus on alma.be written in python.
 ## Web Scraper
 ```sh
 crontab -e
+```
+```sh
 * 23 * * * python /path/to/script/scraper.py
 ```
 Add the `clean` argument to reset the database.
