@@ -1,13 +1,9 @@
 # coding=utf-8
 import sys
-from datetime import datetime, timedelta
-
 import requests
-
+import utilities
 from lxml import html
-from almapi import utilities
-
-
+from datetime import datetime, timedelta
 
 # GENERAL VARIABLES
 
@@ -67,7 +63,9 @@ DATE_TODAY_IN_WEEK = DATE_TODAY.weekday()
 def get_week_menu(url, day_identifier):
     """
         :param url The url that contains the menu
+        :type url String
         :param day_identifier Identifier array used to identify the day elements on the page
+        :type day_identifier Array of strings
 
         Retrieves the HTML of an ALMA week menu page.
             Searches for the different day menus
@@ -82,26 +80,22 @@ def get_week_menu(url, day_identifier):
     week_menus = {}
 
     for day_index, day_name in enumerate(DAYS_OF_THE_WEEK):
-
         day_menu = {}
         day_menu_tree = tree.xpath('//a[@name="' + day_identifier[day_index] + '"]/../following::table[1]')
 
         for course_index, course_name in enumerate(COURSES):
-
             course_options = {}
-            is_option_vegetarian_list = []
+            vegetarian_list = []
             course_tree = day_menu_tree[0].xpath('child::tr[' + str(2 * (course_index + 1) + 1) + ']//td[last()]')
 
             for x in course_tree[0].xpath('br|img'):
-                is_option_vegetarian_list.append(True) if x.xpath('@alt="' + VEGETARIAN_IDENTIFIER + '"') else is_option_vegetarian_list.append(False)
+                vegetarian_list.append(True) if x.xpath('@alt="' + VEGETARIAN_IDENTIFIER + '"') else vegetarian_list.append(False)
 
             for option_index, option_element_text in enumerate(course_tree[0].xpath('text()')):
-
                 if option_element_text.strip():
                     option_name = option_element_text[:option_element_text.find(unicode('€', "utf-8"))].strip()
                     option_price_index = option_element_text.find(unicode('€', "utf-8"))
-
-                    option_is_vegetarian = is_option_vegetarian_list[option_index] if option_index < len(is_option_vegetarian_list) else False
+                    option_is_vegetarian = vegetarian_list[option_index] if option_index < len(vegetarian_list) else False
 
                     if option_name == NA_IDENTIFIER:
                         option_name = option_price = 'Not Available'
@@ -117,17 +111,18 @@ def get_week_menu(url, day_identifier):
                     }
 
             day_menu[course_name] = course_options
-
         week_menus[day_name] = day_menu
 
     return week_menus
 
-
 def save_week_menu(alma_id, week_menu, day_modifier):
     """
         :param alma_id The id of the current alma
-        :param week_menu The menu of the current alma (dictionary)
+        :type alma_id Integer
+        :param week_menu The menu of the current alma
+        :type week_menu Dictionary #get_week_menu
         :param day_modifier The modifier used to calculate the day of the menu (day_index - DATE_TODAY_IN_WEEK + day_modifier)
+        :type day_modifier Integer
 
         Iterates over all the days of the week.
             For each day we calculate the date (:see day_modifier) and add it to the database. (Returns a menu id)
