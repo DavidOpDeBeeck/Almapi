@@ -28,7 +28,6 @@ def open_connection():
     connection = sqlite3.connect(DB_NAME)
     return connection.cursor()
 
-
 def close_connection():
     """
         Closes the connection to the database file.
@@ -37,8 +36,11 @@ def close_connection():
     connection.commit()
     connection.close()
 
-
 def create_tables():
+    """
+        Checks if the tables in array DB_TABLES exist.
+        If they don't exist it executes the create tables script in DB_CREATE_NAME.
+    """
     if not check_if_tables_exist():
         try:
             cursor = open_connection()
@@ -48,8 +50,11 @@ def create_tables():
         finally:
             close_connection()
 
-
 def drop_tables():
+    """
+        Checks if the tables in array DB_TABLES exist.
+        If they do exist it executes the drop table command.
+    """
     try:
         cursor = open_connection()
         for table_name in DB_TABLES:
@@ -59,8 +64,11 @@ def drop_tables():
     finally:
         close_connection()
 
-
 def check_if_tables_exist():
+    """
+        Checks if the tables in array DB_TABLES exist.
+        :return True if they all exist. False if one of them doesn't exist.
+    """
     try:
         cursor = open_connection()
         exist = True
@@ -72,8 +80,10 @@ def check_if_tables_exist():
     finally:
         close_connection()
 
-
 def get_all_almas():
+    """
+        :return A list containing the id and name of each alma.
+    """
     try:
         cursor = open_connection()
         cursor.execute('SELECT alma_id,name FROM ALMA;')
@@ -87,8 +97,12 @@ def get_all_almas():
     finally:
         close_connection()
 
-
 def get_alma(alma_id):
+    """
+        :param alma_id The id of the alma whose information you want to retrieve.
+        :type alma_id Integer
+        :return A dictionary containing the id and name of the alma with the specified id.
+    """
     try:
         cursor = open_connection()
         cursor.execute('SELECT alma_id,name FROM ALMA WHERE alma_id=?;', (alma_id,))
@@ -100,8 +114,16 @@ def get_alma(alma_id):
     finally:
         close_connection()
 
-
 def get_menu(alma_id, year, week):
+    """
+        :param alma_id The id of the alma whose menu you want to retrieve.
+        :type alma_id Integer
+        :param year The year in which the menu you want to retrieve is.
+        :type year Integer
+        :param week The week in which the menu you want to retrieve is.
+        :type week Integer
+        :return A dictionary containing the different days and their menus for the alma with the specified id.
+    """
     try:
         cursor = open_connection()
 
@@ -142,8 +164,12 @@ def get_menu(alma_id, year, week):
     finally:
         close_connection()
 
-
 def add_alma(alma_name):
+    """
+        :param alma_name The name of the alma to be added.
+        :type alma_name String
+        :return The id of the alma with the specified name.
+    """
     try:
         cursor = open_connection()
         cursor.execute('SELECT alma_id FROM ALMA WHERE name=?;', (alma_name,))
@@ -156,8 +182,14 @@ def add_alma(alma_name):
     finally:
         close_connection()
 
-
 def add_option(option_name, is_vegetarian):
+    """
+        :param option_name The name of the option to be added.
+        :type option_name String
+        :param is_vegetarian If the option is vegetarian.
+        :type is_vegetarian Boolean
+        :return The id of the option with the specified name.
+    """
     try:
         cursor = open_connection()
         cursor.execute('SELECT option_id FROM OPTION WHERE name=?;', (option_name,))
@@ -170,8 +202,12 @@ def add_option(option_name, is_vegetarian):
     finally:
         close_connection()
 
-
 def add_course(course_name):
+    """
+        :param course_name The name of the course to be added.
+        :type course_name String
+        :return The id of the course with the specified name.
+    """
     try:
         cursor = open_connection()
         cursor.execute('SELECT course_id FROM COURSE WHERE name=?;', (course_name,))
@@ -184,8 +220,14 @@ def add_course(course_name):
     finally:
         close_connection()
 
-
 def add_menu(alma_id, menu_date):
+    """
+        :param alma_id The id of the alma to be added.
+        :type alma_id Integer
+        :param menu_date The date of the menu to be added.
+        :type menu_date Date
+        :return The id of the menu with the specified alma and date.
+    """
     try:
         cursor = open_connection()
         cursor.execute('SELECT menu_id FROM MENU WHERE alma_id=? AND date=?;', (alma_id, menu_date,))
@@ -198,8 +240,18 @@ def add_menu(alma_id, menu_date):
     finally:
         close_connection()
 
-
 def add_options_to_menu(menu_id, course_id, options, prices):
+    """
+        :param menu_id The id of the menu.
+        :type menu_id Integer
+        :param course_id The id of the course.
+        :type course_id Integer
+        :param options The id of the options to be added to the menu and course.
+        :type options Array of Integers
+        :param prices The prices of the options to be added to the menu and course.
+        :type prices Array of Integers
+        :return The id of the options.
+    """
     try:
         cursor = open_connection()
         cursor.execute(' DELETE FROM MENU_has_OPTION WHERE menu_id=? AND course_id=?;', (menu_id, course_id,))
@@ -209,10 +261,16 @@ def add_options_to_menu(menu_id, course_id, options, prices):
     finally:
         close_connection()
 
-
 # HELPER FUNCTIONS
 
 def get_first_day_in_week(year, week):
+    """
+        :param year The year the week is in.
+        :type year Integer
+        :param week The week you want the first day of.
+        :type week Integer
+        :return The first day in the specified week and year.
+    """
     ret = datetime.strptime('%04d-%02d-1' % (year, week), '%Y-%W-%w')
     if date(year, 1, 4).isoweekday() > 4:
         ret -= timedelta(days=7)
