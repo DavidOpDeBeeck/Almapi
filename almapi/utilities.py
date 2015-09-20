@@ -128,7 +128,7 @@ def get_menu(alma_id, year, week):
         cursor = open_connection()
 
         from_date = get_first_day_in_week(year, week)
-        to_date = from_date + timedelta(days=6)
+        to_date = (from_date + timedelta(days=6))
 
         response = []
         courses = {}
@@ -138,7 +138,7 @@ def get_menu(alma_id, year, week):
         for course in cursor.fetchall():
             courses[course[0]] = course[1]
 
-        cursor.execute('SELECT menu_id,date FROM MENU WHERE alma_id=? AND date > ? AND date < ?;', (alma_id, from_date, to_date,))
+        cursor.execute('SELECT menu_id,date FROM MENU WHERE alma_id=? AND date >= ? AND date < ?;', (alma_id, from_date.date(), to_date.date(),))
         menus = cursor.fetchall()
         for menu in menus:
             day = {
