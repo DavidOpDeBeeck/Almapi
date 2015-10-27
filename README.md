@@ -1,3 +1,6 @@
+
+**Due to changes to alma.be this scraper does not work anymore!**
+
 # Almapi
 A RESTful API for the menus on alma.be written in python.
 
